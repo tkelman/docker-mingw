@@ -6,7 +6,7 @@ RUN zypper -n addrepo http://download.opensuse.org/repositories/windows:mingw:wi
     git clone http://llvm.org/git/llvm.git /home/llvm && \
     mkdir -p /home/llvm/buildcross
 WORKDIR /home/llvm/buildcross
-RUN git log -1 && \
+RUN git checkout release_37 && git log -1 && \
     echo 'set(CMAKE_C_COMPILER cc)' > ../NATIVE.cmake && \
     echo 'set(CMAKE_CXX_COMPILER c++)' >> ../NATIVE.cmake && \
     cmake .. -DCMAKE_C_COMPILER=i686-w64-mingw32-gcc \
