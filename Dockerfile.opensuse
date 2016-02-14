@@ -6,12 +6,14 @@ RUN zypper -n addrepo http://download.opensuse.org/repositories/windows:mingw:wi
     git clone http://llvm.org/git/llvm.git /home/llvm && \
     mkdir -p /home/llvm/buildcross
 WORKDIR /home/llvm/buildcross
-RUN git checkout release_37 && git log -1 && \
+RUN git log -1 && \
     echo 'set(CMAKE_C_COMPILER cc)' > ../NATIVE.cmake && \
     echo 'set(CMAKE_CXX_COMPILER c++)' >> ../NATIVE.cmake && \
+    echo '// removed for compatibility with win32-threads mingw-w64' > ../lib/Support/ThreadPool.cpp && \
     cmake .. -DCMAKE_C_COMPILER=i686-w64-mingw32-gcc \
       -DCMAKE_CXX_COMPILER=i686-w64-mingw32-g++ \
       -DCMAKE_SYSTEM_NAME=Windows \
       -DCMAKE_RC_COMPILER=/usr/bin/i686-w64-mingw32-windres \
-      -DCROSS_TOOLCHAIN_FLAGS_NATIVE=-DCMAKE_TOOLCHAIN_FILE=/home/llvm/NATIVE.cmake
+      -DCROSS_TOOLCHAIN_FLAGS_NATIVE=-DCMAKE_TOOLCHAIN_FILE=/home/llvm/NATIVE.cmake \
+      -DLLVM_ENABLE_THREADS=OFF # win32-threads mingw-w64 does not have std::thread
 RUN make -j4
