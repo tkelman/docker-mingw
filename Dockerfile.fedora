@@ -1,0 +1,16 @@
+FROM fedora:23
+
+RUN dnf install -y git make gcc-c++ \
+      cmake python mingw32-gcc-c++ && \
+    git clone http://llvm.org/git/llvm.git /home/llvm && \
+    mkdir -p /home/llvm/buildcross
+WORKDIR /home/llvm/buildcross
+RUN git log -1 && \
+    echo 'set(CMAKE_C_COMPILER cc)' > ../NATIVE.cmake && \
+    echo 'set(CMAKE_CXX_COMPILER c++)' >> ../NATIVE.cmake && \
+    cmake .. -DCMAKE_C_COMPILER=i686-w64-mingw32-gcc \
+      -DCMAKE_CXX_COMPILER=i686-w64-mingw32-g++ \
+      -DCMAKE_SYSTEM_NAME=Windows \
+      -DCMAKE_RC_COMPILER=/usr/bin/i686-w64-mingw32-windres \
+      -DCROSS_TOOLCHAIN_FLAGS_NATIVE=-DCMAKE_TOOLCHAIN_FILE=/home/llvm/NATIVE.cmake
+RUN make -j4
