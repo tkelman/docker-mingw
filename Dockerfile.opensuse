@@ -7,7 +7,7 @@ RUN zypper -n addrepo obs://windows:mingw:win32/openSUSE_42.1 mingw32 && \
     git clone https://github.com/flame/blis /home/blis
 WORKDIR /home/blis/build
 RUN git log -1 && \
-    for i in reference dunnington sandybridge haswell bulldozer piledriver carrizo; do
+    for i in reference dunnington sandybridge haswell bulldozer piledriver carrizo; do \
       mkdir -p ../build64$i && \
       cd ../build64$i && \
       ../configure $i && \
@@ -17,5 +17,5 @@ RUN git log -1 && \
       cd ../build32$i && \
       ../configure $i && \
       cp /usr/i686-w64-mingw32/sys-root/mingw/bin/lib* . && \
-      make -j4 CC=i686-w64-mingw32-gcc CPICFLAGS="" BLIS_ENABLE_DYNAMIC_BUILD=yes;
+      make -j4 CC=i686-w64-mingw32-gcc CPICFLAGS="" BLIS_ENABLE_DYNAMIC_BUILD=yes; \
     done
