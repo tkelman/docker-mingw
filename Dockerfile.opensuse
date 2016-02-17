@@ -2,8 +2,8 @@ FROM opensuse:42.1
 
 RUN zypper -n addrepo obs://windows:mingw:win32/openSUSE_42.1 mingw32 && \
     zypper -n addrepo obs://windows:mingw:win64/openSUSE_42.1 mingw64 && \
-    zypper -n --gpg-auto-import-keys install git make \
-      mingw32-cross-gcc mingw64-cross-gcc && \
+    zypper -n --gpg-auto-import-keys install ca-certificates \
+      git make mingw32-cross-gcc mingw64-cross-gcc && \
     git clone https://github.com/flame/blis /home/blis
 WORKDIR /home/blis/build
 RUN git log -1 && \
@@ -12,10 +12,10 @@ RUN git log -1 && \
       cd ../build64$i && \
       ../configure $i && \
       cp /usr/x86_64-w64-mingw32/sys-root/mingw/bin/lib* . && \
-      make -j4 all test CC=x86_64-w64-mingw32-gcc CPICFLAGS="" BLIS_ENABLE_DYNAMIC_BUILD=yes && \
+      make -j4 CC=x86_64-w64-mingw32-gcc CPICFLAGS="" BLIS_ENABLE_DYNAMIC_BUILD=yes && \
       mkdir -p ../build32$i && \
       cd ../build32$i && \
       ../configure $i && \
       cp /usr/i686-w64-mingw32/sys-root/mingw/bin/lib* . && \
-      make -j4 all test CC=i686-w64-mingw32-gcc CPICFLAGS="" BLIS_ENABLE_DYNAMIC_BUILD=yes;
+      make -j4 CC=i686-w64-mingw32-gcc CPICFLAGS="" BLIS_ENABLE_DYNAMIC_BUILD=yes;
     done
