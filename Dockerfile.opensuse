@@ -11,11 +11,9 @@ RUN git log -1 && \
       mkdir -p ../build64$i && \
       cd ../build64$i && \
       ../configure $i && \
-      cp /usr/x86_64-w64-mingw32/sys-root/mingw/bin/lib* . && \
       make -j4 test CC=x86_64-w64-mingw32-gcc CPICFLAGS="" BLIS_ENABLE_DYNAMIC_BUILD=yes && \
       mkdir -p ../build32$i && \
       cd ../build32$i && \
       ../configure $i && \
-      cp /usr/i686-w64-mingw32/sys-root/mingw/bin/lib* . && \
       make -j4 CC=i686-w64-mingw32-gcc CPICFLAGS="" BLIS_ENABLE_DYNAMIC_BUILD=yes; \
     done
