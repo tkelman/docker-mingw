@@ -1,1 +1,1 @@
-Dockerfile.opensuse
+Dockerfile.debian

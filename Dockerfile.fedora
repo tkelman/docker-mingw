@@ -1,16 +1,18 @@
 FROM fedora:23
 
-RUN dnf install -y git make gcc-c++ \
-      cmake python mingw32-gcc-c++ && \
-    git clone http://llvm.org/git/llvm.git /home/llvm && \
-    mkdir -p /home/llvm/buildcross
-WORKDIR /home/llvm/buildcross
+RUN dnf install -y git make mingw32-gcc mingw64-gcc && \
+    git clone https://github.com/flame/blis /home/blis
+WORKDIR /home/blis
 RUN git log -1 && \
-    echo 'set(CMAKE_C_COMPILER cc)' > ../NATIVE.cmake && \
-    echo 'set(CMAKE_CXX_COMPILER c++)' >> ../NATIVE.cmake && \
-    cmake .. -DCMAKE_C_COMPILER=i686-w64-mingw32-gcc \
-      -DCMAKE_CXX_COMPILER=i686-w64-mingw32-g++ \
-      -DCMAKE_SYSTEM_NAME=Windows \
-      -DCMAKE_RC_COMPILER=/usr/bin/i686-w64-mingw32-windres \
-      -DCROSS_TOOLCHAIN_FLAGS_NATIVE=-DCMAKE_TOOLCHAIN_FILE=/home/llvm/NATIVE.cmake
-RUN make -j4
+    mkdir -p build32reference && \
+    cd build32reference && \
+    ../configure reference && \
+    make -j4 CC=i686-w64-mingw32-gcc AR=i686-w64-mingw32-ar \
+      RANLIB=i686-w64-mingw32-ranlib CPICFLAGS="" BLIS_ENABLE_DYNAMIC_BUILD=yes && \
+    for i in reference dunnington sandybridge haswell bulldozer piledriver carrizo; do \
+      mkdir -p ../build64$i && \
+      cd ../build64$i && \
+      ../configure $i && \
+      make -j4 CC=x86_64-w64-mingw32-gcc AR=x86_64-w64-mingw32-ar \
+        RANLIB=x86_64-w64-mingw32-ranlib CPICFLAGS="" BLIS_ENABLE_DYNAMIC_BUILD=yes; \
+    done

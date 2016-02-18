@@ -4,17 +4,18 @@ FROM debian:stretch
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-      ca-certificates git build-essential \
-      cmake python mingw-w64 && \
-    git clone http://llvm.org/git/llvm.git /home/llvm && \
-    mkdir -p /home/llvm/buildcross
-WORKDIR /home/llvm/buildcross
+      ca-certificates git build-essential mingw-w64 && \
+    git clone https://github.com/flame/blis /home/blis
 RUN git log -1 && \
-    echo 'set(CMAKE_C_COMPILER cc)' > ../NATIVE.cmake && \
-    echo 'set(CMAKE_CXX_COMPILER c++)' >> ../NATIVE.cmake && \
-    cmake .. -DCMAKE_C_COMPILER=i686-w64-mingw32-gcc-posix \
-      -DCMAKE_CXX_COMPILER=i686-w64-mingw32-g++-posix \
-      -DCMAKE_SYSTEM_NAME=Windows \
-      -DCMAKE_RC_COMPILER=/usr/bin/i686-w64-mingw32-windres \
-      -DCROSS_TOOLCHAIN_FLAGS_NATIVE=-DCMAKE_TOOLCHAIN_FILE=/home/llvm/NATIVE.cmake
-RUN make -j4
+    mkdir -p build32reference && \
+    cd build32reference && \
+    ../configure reference && \
+    make -j4 CC=i686-w64-mingw32-gcc AR=i686-w64-mingw32-ar \
+      RANLIB=i686-w64-mingw32-ranlib CPICFLAGS="" BLIS_ENABLE_DYNAMIC_BUILD=yes && \
+    for i in reference dunnington sandybridge haswell bulldozer piledriver carrizo; do \
+      mkdir -p ../build64$i && \
+      cd ../build64$i && \
+      ../configure $i && \
+      make -j4 CC=x86_64-w64-mingw32-gcc AR=x86_64-w64-mingw32-ar \
+        RANLIB=x86_64-w64-mingw32-ranlib CPICFLAGS="" BLIS_ENABLE_DYNAMIC_BUILD=yes; \
+    done
