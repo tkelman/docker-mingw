@@ -1,4 +1,5 @@
 # docker-mingw
 Various dockerfiles for mingw-w64 cross compilation
 
-(starting with building llvm, but expect that to change around to other libraries)
+Check the [branches](https://github.com/tkelman/docker-mingw/branches)
+for different libraries.
