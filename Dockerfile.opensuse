@@ -1,11 +1,9 @@
 FROM opensuse:42.1
 
-# my personal branch built with --enable-threads=posix, needed for c++11 threads in llvm
-RUN zypper -n addrepo obs://home:kelman:branches:windows:mingw:win64/openSUSE_42.1 kelman && \
-    zypper -n addrepo obs://windows:mingw:win64/openSUSE_42.1 mingw64 && \
-    zypper -n --gpg-auto-import-keys install git make \
-      gcc-c++ cmake python mingw64-cross-gcc-c++ && \
-    git clone http://llvm.org/git/llvm.git /home/llvm && \
+RUN zypper -n addrepo obs://windows:mingw:win64/openSUSE_42.1 mingw64 && \
+    zypper -n --gpg-auto-import-keys install git ca-certificates-mozilla \
+      make gcc-c++ cmake python mingw64-cross-gcc-c++ && \
+    git clone https://github.com/llvm-mirror/llvm /home/llvm && \
     mkdir -p /home/llvm/buildcross
 WORKDIR /home/llvm/buildcross
 RUN git log -1 && \
@@ -13,7 +11,7 @@ RUN git log -1 && \
     echo 'set(CMAKE_CXX_COMPILER c++)' >> ../NATIVE.cmake && \
     cmake .. -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
       -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
-      -DCMAKE_SYSTEM_NAME=Windows \
+      -DCMAKE_SYSTEM_NAME=Windows -DLLVM_ENABLE_THREADS=0 \
       -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres \
       -DCROSS_TOOLCHAIN_FLAGS_NATIVE=-DCMAKE_TOOLCHAIN_FILE=/home/llvm/NATIVE.cmake
-RUN make -j4
+RUN make -j8
