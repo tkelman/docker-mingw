@@ -1,0 +1,31 @@
+# Vagrantfile for MinGW-w64 cross-compilation of Julia
+
+$script = <<SCRIPT
+# Change the following to i686-w64-mingw32 for 32 bit Julia:
+export XC_HOST=x86_64-w64-mingw32
+# Change the following to 32 for 32 bit Julia:
+export BITS=64
+zypper addrepo http://download.opensuse.org/repositories/windows:mingw:win$BITS/openSUSE_13.1/windows:mingw:win$BITS.repo
+zypper --gpg-auto-import-keys refresh
+zypper -n install --no-recommends git make cmake tar wine which curl \
+    python python-xml patch gcc-c++ m4 p7zip.i586 libxml2-tools
+zypper -n install mingw$BITS-cross-gcc-c++ mingw$BITS-cross-gcc-fortran \
+    mingw$BITS-libstdc++6 mingw$BITS-libgfortran3 mingw$BITS-libssp0
+# opensuse packages the mingw runtime dlls under sys-root/mingw/bin, not /usr/lib64/gcc
+cp /usr/$XC_HOST/sys-root/mingw/bin/*.dll /usr/lib*/gcc/$XC_HOST/*/
+git clone git://github.com/JuliaLang/julia.git julia
+cd julia
+make -j4 win-extras julia-ui-release julia-ui-debug
+export WINEDEBUG=-all
+# this last step may need to be run interactively
+make -j4 binary-dist
+SCRIPT
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "chef/opensuse-13.1"
+  config.vm.provider :virtualbox do |vb|
+    # Use VBoxManage to customize the VM. For example to change memory:
+    vb.memory = 2048
+  end
+  config.vm.provision :shell, :inline => $script
+end

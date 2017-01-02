@@ -1,0 +1,53 @@
+# Dockerfile for MinGW cross-compilation of Julia
+FROM opensuse:13.1
+MAINTAINER Tony Kelman <tony@kelman.net>
+
+#    zypper addrepo http://download.opensuse.org/repositories/Emulators/openSUSE_13.1/Emulators.repo && \
+RUN zypper addrepo http://download.opensuse.org/repositories/windows:mingw:win32/openSUSE_13.1/windows:mingw:win32.repo && \
+    zypper addrepo http://download.opensuse.org/repositories/windows:mingw:win64/openSUSE_13.1/windows:mingw:win64.repo && \
+    zypper --gpg-auto-import-keys refresh && \
+    zypper -n install mingw32-cross-gcc-c++ mingw32-cross-gcc-fortran && \
+    zypper -n install mingw64-cross-gcc-c++ mingw64-cross-gcc-fortran && \
+    zypper -n install mingw32-libstdc++6 mingw32-libgfortran3 mingw32-libssp0 && \
+    zypper -n install mingw64-libstdc++6 mingw64-libgfortran3 mingw64-libssp0 && \
+    cp /usr/i686-w64-mingw32/sys-root/mingw/bin/*.dll /usr/lib*/gcc/i686-w64-mingw32/*/ && \
+    cp /usr/x86_64-w64-mingw32/sys-root/mingw/bin/*.dll /usr/lib*/gcc/x86_64-w64-mingw32/*/ && \
+    zypper -n install --no-recommends git make cmake tar wine which curl patch gcc-c++ m4 p7zip.i586
+# opensuse packages the mingw runtime dlls under sys-root/mingw/bin, not /usr/lib64/gcc
+
+RUN git clone git://github.com/JuliaLang/julia.git /home/user/julia32 && \
+    git clone git://github.com/JuliaLang/julia.git /home/user/julia64
+RUN cd /home/user/julia32 && git pull && make XC_HOST=i686-w64-mingw32 -j4 -C deps
+RUN cd /home/user/julia64 && git pull && make XC_HOST=x86_64-w64-mingw32 -j4 -C deps
+RUN cd /home/user/julia32 && make XC_HOST=i686-w64-mingw32 -j4 win-extras binary-dist
+RUN cd /home/user/julia64 && make XC_HOST=x86_64-w64-mingw32 -j4 win-extras binary-dist
+
+#RUN for XC_HOST in i686-w64-mingw32 x86_64-w64-mingw32; do \
+#      export XC_HOST; \
+#      for i in openblas llvm fftw gmp mpfr suitesparse arpack pcre; do \
+#        make -j4 -C deps install-$i; \
+#      done; \
+#      $XC_HOST-ar cr usr/lib/libgtest.a; \
+#      $XC_HOST-ar cr usr/lib/libgtest_main.a; \
+#      tar -cJf $XC_HOST.tar.xz usr; \
+#      make distcleanall; \
+#      unset XC_HOST; \
+#    done
+
+# to build:
+# echo 'override LIBBLAS = -L$(JULIAHOME)/usr/bin -lopenblas' > Make.user
+# echo 'override LIBBLASNAME = libopenblas' >> Make.user
+# echo 'override LIBLAPACK = $(LIBBLAS)' >> Make.user
+# echo 'override LIBLAPACKNAME = $(LIBBLASNAME)' >> Make.user
+# echo 'override LLVM_CONFIG = $(JULIAHOME)/usr/bin/llvm-config' >> Make.user
+# echo 'override PCRE_CONFIG = $(JULIAHOME)/usr/bin/pcre-config' >> Make.user
+# for i in BLAS LAPACK LLVM FFTW GMP MPFR SUITESPARSE ARPACK PCRE; do
+#   echo "USE_SYSTEM_$i = 1" >> Make.user
+# done
+# export XC_HOST=i686-w64-mingw32
+# tar -xJf $XC_HOST.tar.xz
+# make win-extras
+# make -j4 dist
+# 
+# make distcleanall
+# rm -rf dist-extras Make.user
